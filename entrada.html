@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Controlo de entrada</title>
+<style>
+*{box-sizing:border-box;margin:0}body{font:16px/1.5 "Helvetica Neue",Arial,sans-serif;color:#2b2b2b;background:#fff;max-width:520px;margin:0 auto;padding:24px 16px 60px}
+h1{font:500 28px Georgia,serif;color:#b08a3e}h2{font:500 20px Georgia,serif;margin:30px 0 8px;padding-top:22px;border-top:1px solid #e6e1d6}p.s{color:#7a7a7a;font-size:14px;margin:4px 0 8px}
+label{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#7a7a7a;margin:16px 0 6px}
+input{width:100%;border:1px solid #e6e1d6;padding:13px;font:16px inherit;font-family:inherit}input:focus{outline:none;border-color:#b08a3e}
+button{font:600 14px inherit;font-family:inherit;letter-spacing:.1em;text-transform:uppercase;padding:14px 18px;border:1px solid #b08a3e;background:#b08a3e;color:#fff;cursor:pointer;margin-top:12px;width:100%}button.o{background:#fff;color:#b08a3e}
+#rs{margin-top:20px}.bx{padding:26px 18px;text-align:center;color:#fff}.bx b{display:block;font:600 34px Georgia,serif;letter-spacing:.04em}.bx span{display:block;font-size:18px;margin-top:6px}
+.ok{background:#1d7a3b}.bad{background:#9b1c24}.wn{background:#b8741a}.nt{padding:16px;border:1px solid #e6e1d6;color:#7a7a7a;font-size:14px}
+.bx input{margin-top:14px;text-align:center;font-size:20px;color:#2b2b2b}.bx label{color:#fff;margin-top:14px}.bx button{background:#fff;color:#1d7a3b}
+li{list-style:none;display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #e6e1d6;font-size:15px}li small{color:#7a7a7a;white-space:nowrap}
+</style></head><body>
+<h1>Controlo de entrada</h1><p class="s">Uso exclusivo dos noivos e da equipa de receção. Não partilhe esta página.</p>
+<label for="pw">Palavra-passe dos noivos</label><input id="pw" type="password" autocomplete="off"><button id="vf" type="button">Guardar e verificar</button>
+<div id="rs"></div>
+<h2>Entradas registadas</h2><p class="s" id="ct"></p><ul id="ls"></ul><button class="o" id="rm" type="button">Limpar lista</button>
+<p class="s" style="margin-top:14px">A lista fica guardada só neste telemóvel. Use sempre o mesmo aparelho à entrada para detetar convites repetidos.</p>
+<script>
+(function(){var $=function(i){return document.getElementById(i)},AL='ABCDEFGHJKMNPQRSTUVWXYZ23456789',q=new URLSearchParams(location.search),SK='entradas';
+var n=(q.get('n')||'').replace(/\s+/g,' ').trim().slice(0,60),l=parseInt(q.get('l'),10),c=(q.get('c')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10);if(!(l>=1&&l<=10))l=1;
+function norm(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim()}
+async function code(a,b,p){var d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(norm(a)+'|'+b+'|'+p)),u=new Uint8Array(d),s='';for(var i=0;i<6;i++)s+=AL[u[i]%AL.length];return s}
+function ld(){try{return JSON.parse(localStorage.getItem(SK)||'{}')}catch(e){return{}}}function sv(o){try{localStorage.setItem(SK,JSON.stringify(o))}catch(e){}}
+function hm(t){var d=new Date(t);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)}
+function box(cls,t,s){var r=$('rs');r.textContent='';var d=document.createElement('div');d.className='bx '+cls;var b=document.createElement('b');b.textContent=t;d.appendChild(b);if(s){var x=document.createElement('span');x.textContent=s;d.appendChild(x)}r.appendChild(d);return d}
+function list(){var o=ld(),k=Object.keys(o).sort(function(a,b){return o[b].t-o[a].t}),tot=0,u=$('ls');u.textContent='';
+k.forEach(function(i){var e=o[i];tot+=e.p;var li=document.createElement('li'),a=document.createElement('span'),b=document.createElement('small');a.textContent=e.n;b.textContent=e.p+(e.p===1?' pessoa':' pessoas')+' · '+hm(e.t);li.appendChild(a);li.appendChild(b);u.appendChild(li)});
+$('ct').textContent=k.length?k.length+(k.length===1?' convite':' convites')+' · '+tot+(tot===1?' pessoa':' pessoas')+' dentro':'Ainda não há entradas registadas.'}
+async function check(){var pw=sessionStorage.getItem('pw')||'';
+if(!n||!c){var d=document.createElement('div');d.className='nt';d.textContent='Digitalize o QR do convidado com a câmara do telemóvel para validar a entrada.';$('rs').textContent='';$('rs').appendChild(d);return}
+if(!pw){box('wn','Falta a palavra-passe','Escreva-a acima.');return}
+var ok=(await code(n,l,pw))===c;if(!ok){box('bad','INVÁLIDO','Código não corresponde a este nome. Não deixe entrar.');return}
+var o=ld(),k=norm(n)+'|'+c;
+if(o[k]){box('wn','JÁ REGISTADO',n+' · entrou às '+hm(o[k].t)+' ('+o[k].p+(o[k].p===1?' pessoa':' pessoas')+')');return}
+var d=box('ok','VÁLIDO',n+' · até '+l+(l===1?' pessoa':' pessoas')),lb=document.createElement('label'),ip=document.createElement('input'),bt=document.createElement('button');
+lb.textContent='Pessoas a entrar';ip.type='text';ip.inputMode='numeric';ip.value=l;bt.type='button';bt.textContent='Registar entrada';
+bt.onclick=function(){var p=parseInt(ip.value,10);if(!(p>=1&&p<=l)){ip.value=l;return}var x=ld();x[k]={n:n,p:p,t:Date.now()};sv(x);list();check()};
+d.appendChild(lb);d.appendChild(ip);d.appendChild(bt)}
+$('vf').onclick=function(){sessionStorage.setItem('pw',$('pw').value);$('pw').value='';check()};
+$('rm').onclick=function(){if(confirm('Apagar toda a lista de entradas deste telemóvel?')){sv({});list();check()}};
+if(sessionStorage.getItem('pw'))$('pw').placeholder='Palavra-passe guardada nesta sessão';list();check();
+})();
+</script></body></html>

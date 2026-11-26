@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Gerador de convites pessoais</title>
+<style>
+*{box-sizing:border-box;margin:0}body{font:16px/1.5 "Helvetica Neue",Arial,sans-serif;color:#2b2b2b;background:#fff;max-width:760px;margin:0 auto;padding:28px 16px 60px}
+h1{font:500 30px Georgia,serif;color:#b08a3e}h2{font:500 20px Georgia,serif;margin:34px 0 4px;padding-top:24px;border-top:1px solid #e6e1d6}p.s{color:#7a7a7a;font-size:14px;margin-bottom:6px}
+label{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#7a7a7a;margin:16px 0 6px}
+input,textarea{width:100%;border:1px solid #e6e1d6;padding:12px;font:16px inherit;font-family:inherit}input:focus,textarea:focus{outline:none;border-color:#b08a3e}
+button{font:500 13px inherit;font-family:inherit;letter-spacing:.12em;text-transform:uppercase;padding:12px 18px;border:1px solid #b08a3e;background:#b08a3e;color:#fff;cursor:pointer;margin-top:14px}button.o{background:#fff;color:#b08a3e;margin:0 6px 0 0;padding:8px 12px;font-size:11px}
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px}td,th{padding:10px 6px;border-bottom:1px solid #e6e1d6;text-align:left;vertical-align:top}th{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#7a7a7a}td.c{font:500 16px monospace;letter-spacing:.14em}
+.r{margin-top:14px;font-weight:600}.ok{color:#1d7a3b}.bad{color:#9b1c24}
+</style></head><body>
+<h1>Gerador de convites pessoais</h1><p class="s">Uso exclusivo dos noivos. Não partilhe esta página nem a palavra-passe.</p>
+<label for="pw">Palavra-passe dos noivos</label><input id="pw" type="password" autocomplete="off" placeholder="Escolha uma frase só sua e guarde-a">
+<label for="bu">Endereço do convite</label><input id="bu" type="text">
+<label for="gl">Convidados (um por linha: Nome; pessoas)</label><textarea id="gl" rows="6" placeholder="João Manuel Silva; 2&#10;Maria Santos; 1"></textarea>
+<button id="go" type="button">Gerar links</button><div class="r bad" id="ge"></div>
+<table id="tb" hidden><thead><tr><th>Convidado</th><th>Código</th><th>Enviar</th></tr></thead><tbody></tbody></table>
+<h2>Verificar código</h2><p class="s">Quando alguém confirmar ou chegar à entrada, confirme se o código pertence mesmo ao nome.</p>
+<label for="vn">Nome</label><input id="vn" type="text"><label for="vl">Pessoas</label><input id="vl" type="text" inputmode="numeric" value="1"><label for="vc">Código</label><input id="vc" type="text" style="text-transform:uppercase">
+<button id="vb" type="button">Verificar</button><div class="r" id="vr"></div>
+<script>
+(function(){var $=function(i){return document.getElementById(i)},AL='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+$('bu').value=/^https?:/.test(location.href)?location.href.replace(/[^\/]*$/,''):'https://marcosdc20.github.io/convite-firmino-mirian/';
+function norm(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim()}
+async function code(n,l,p){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(norm(n)+'|'+l+'|'+p)),u=new Uint8Array(b),s='';for(var i=0;i<6;i++)s+=AL[u[i]%AL.length];return s}
+function copy(t,b){var o=b.textContent;function ok(){b.textContent='Copiado';setTimeout(function(){b.textContent=o},1500)}if(navigator.clipboard)navigator.clipboard.writeText(t).then(ok);else{var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();ok()}}
+function btn(t,f){var b=document.createElement('button');b.className='o';b.type='button';b.textContent=t;b.onclick=function(){f(b)};return b}
+$('go').onclick=async function(){var pw=$('pw').value,e=$('ge'),tb=$('tb'),tbd=tb.querySelector('tbody');e.textContent='';tbd.textContent='';
+if(pw.length<6){e.textContent='Escolha uma palavra-passe com pelo menos 6 caracteres.';return}
+var base=$('bu').value.trim();if(base&&!/\/$/.test(base))base+='/';var ls=$('gl').value.split('\n').map(function(x){return x.trim()}).filter(Boolean);
+if(!ls.length){e.textContent='Escreva pelo menos um convidado.';return}
+for(var i=0;i<ls.length;i++){var pt=ls[i].split(';'),n=pt[0].replace(/\s+/g,' ').trim(),l=parseInt(pt[1],10);if(!(l>=1&&l<=10))l=1;if(!n)continue;
+var c=await code(n,l,pw),url=base+'?n='+encodeURIComponent(n)+'&l='+l+'&c='+c,
+m='Olá, '+n+'! Com grande alegria, convidamos Vossa Excelência para celebrar connosco o nosso casamento. Este é o seu convite pessoal e intransmissível (válido para '+l+(l===1?' pessoa':' pessoas')+'): '+url;
+var tr=document.createElement('tr'),a=document.createElement('td'),b=document.createElement('td'),d=document.createElement('td');
+a.textContent=n+' — '+l+(l===1?' pessoa':' pessoas');b.className='c';b.textContent=c;
+d.appendChild(btn('WhatsApp',function(){window.open('https://wa.me/?text='+encodeURIComponent(m),'_blank','noopener')}));
+d.appendChild(btn('Copiar link',(function(u){return function(bt){copy(u,bt)}})(url)));d.appendChild(btn('Copiar mensagem',(function(u){return function(bt){copy(u,bt)}})(m)));
+tr.appendChild(a);tr.appendChild(b);tr.appendChild(d);tbd.appendChild(tr)}
+tb.hidden=false};
+$('vb').onclick=async function(){var r=$('vr'),pw=$('pw').value,n=$('vn').value,l=parseInt($('vl').value,10)||1,c=$('vc').value.trim().toUpperCase();
+if(!pw||!n||!c){r.className='r bad';r.textContent='Preencha a palavra-passe, o nome e o código.';return}
+var ok=(await code(n,l,pw))===c;r.className='r '+(ok?'ok':'bad');r.textContent=ok?'Código válido para este nome.':'Código inválido: nome, pessoas ou código não correspondem.'};
+})();
+</script></body></html>
